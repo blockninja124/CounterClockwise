@@ -5,6 +5,7 @@
   "compatibilityLevel": "JAVA_17",
   "refmap": "counterclockwise.refmap.json",
   "mixins": [
+    "PhysShipAttachmentAccessor",
     "create.belt_tracks.MixinBeltBlock",
     "create.belt_tracks.MixinBeltBlockEntity",
     "create.fan.MixinEncasedFanBlock",
