@@ -19,7 +19,8 @@ public abstract class MixinPortableStorageInterfaceMovement implements MovementB
             at = @At(
                     value = "INVOKE",
                     target = "Lcom/simibubi/create/content/contraptions/actors/psi/PortableStorageInterfaceBlockEntity;isPowered()Z"
-            )
+            ),
+            remap = false
     )
     public boolean findStationaryInterface(PortableStorageInterfaceBlockEntity instance, Operation<Boolean> original, @Local(ordinal = 0, argsOnly = true) MovementContext context) {
         if (instance instanceof IPSIWithShipBehavior behavior && behavior.getWorkingMode().get() == IPSIWithShipBehavior.WorkingMode.WITH_SHIP) {

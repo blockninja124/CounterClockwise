@@ -1,21 +1,37 @@
 package com.blockninja.counterclockwise
 
+import com.blockninja.counterclockwise.entity.CounterClockwiseEntityTypes
 import com.blockninja.counterclockwise.ships.BeltStorageForceInducer
 import com.blockninja.counterclockwise.ships.FanForceInducer
+import com.simibubi.create.AllBlocks
 import net.minecraft.core.BlockPos
+import net.minecraft.world.level.block.Block
+import net.minecraft.world.phys.shapes.BooleanOp
+import net.minecraft.world.phys.shapes.Shapes
+import net.minecraft.world.phys.shapes.VoxelShape
 import net.minecraftforge.fml.common.Mod
+import org.joml.Quaterniond
 import org.joml.Vector3d
 import org.valkyrienskies.core.api.VsBeta
-import org.valkyrienskies.core.api.event.EventConsumer
 import org.valkyrienskies.core.api.event.RegisteredListener
 import org.valkyrienskies.core.api.events.CollisionEvent
 import org.valkyrienskies.core.api.events.ShipLoadEvent
 import org.valkyrienskies.core.api.util.GameTickOnly
 import org.valkyrienskies.core.api.util.PhysTickOnly
+import org.valkyrienskies.core.api.util.WindProvider
 import org.valkyrienskies.mod.api.events.RegisterBlockStateEvent
 import org.valkyrienskies.mod.api.toJOML
 import org.valkyrienskies.mod.api.vsApi
+import org.valkyrienskies.mod.common.config.MassDatapackResolver.generateShapeFromVoxel
+import org.valkyrienskies.mod.common.config.VSGameConfig
+import org.valkyrienskies.mod.common.vsCore
+import thedarkcolour.kotlinforforge.forge.MOD_BUS
+import thedarkcolour.kotlinforforge.forge.vectorutil.v3d.minus
 import java.util.function.Consumer
+import java.util.stream.Stream
+import kotlin.math.abs
+import kotlin.math.sqrt
+
 
 @OptIn(PhysTickOnly::class, VsBeta::class, GameTickOnly::class)
 @Mod(CounterClockwise.MOD_ID)
@@ -38,8 +54,23 @@ class CounterClockwise {
             )
         }
 
-        // Waiting on https://github.com/ValkyrienSkies/Valkyrien-Skies-2/pull/1453 to finish
-        vsApi.registerBlockStateEvent.on((Consumer { registerBlockStateEvent: RegisterBlockStateEvent -> }))
+        vsApi.registerBlockStateEvent.on((Consumer { registerBlockStateEvent: RegisterBlockStateEvent ->
+            var testVoxelShape = Stream.of(
+                Block.box(0.0, -5.0, 0.0, 16.0, 21.0, 16.0),
+                Block.box(0.0, 0.0, -5.0, 16.0, 16.0, 21.0),
+                Block.box(-5.0, 0.0, 0.0, 21.0, 16.0, 16.0)
+            ).reduce { v1: VoxelShape, v2: VoxelShape -> Shapes.join(v1, v2, BooleanOp.OR) }.get();
+
+            val shape = generateShapeFromVoxel(testVoxelShape) ?: return@Consumer
+            val solidState = vsCore.newSolidStateBuilder()
+                .shape(shape)
+                .elasticity(VSGameConfig.SERVER.defaultBlockElasticity)
+                .friction(VSGameConfig.SERVER.defaultBlockFriction)
+                .hardness(VSGameConfig.SERVER.defaultBlockHardness)
+                .build()
+
+            registerBlockStateEvent.register(AllBlocks.WATER_WHEEL.get().defaultBlockState(), solidState)
+        }))
 
 
         vsApi.registerAttachment<BeltStorageForceInducer>(
@@ -59,13 +90,38 @@ class CounterClockwise {
         vsApi.shipLoadEvent.on(Consumer { event: ShipLoadEvent ->
             event.ship.setAttachment<BeltStorageForceInducer>(BeltStorageForceInducer())
         })
+
+        CounterClockwiseEntityTypes.register(MOD_BUS)
     }
 
     companion object {
         const val MOD_ID: String = "counterclockwise"
+
     }
 }
 
 fun BlockPos.centerJOMLD(): Vector3d {
     return this.center.toJOML()
 }
+
+//https://stackoverflow.com/questions/1171849/finding-quaternion-representing-the-rotation-from-one-vector-to-another
+fun getHingeRotation(localDir: Vector3d, right: Vector3d = Vector3d(1.0, 0.0, 0.0)): Quaterniond {
+    if ((localDir - right).dist() < 1e-5) { return Quaterniond() }
+
+    val v1l = right.dist()
+    val v2l = localDir.dist()
+
+    val a = right.cross(localDir)
+
+    val k = sqrt(v1l * v1l * v2l * v2l)
+    val kCosTheta = right.dot(localDir)
+
+    if (abs(kCosTheta / k + 1.0) < 1e-5) {
+        val ort = right.let { it.orthogonalize(it) }
+        return Quaterniond(ort.x, ort.y, ort.z, 0.0).normalize()
+    }
+
+    return Quaterniond(a.x, a.y, a.z, k + kCosTheta).normalize()
+}
+
+fun Vector3d.dist(): Double {return sqrt(x * x + y * y + z * z)}

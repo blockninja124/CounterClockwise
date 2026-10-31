@@ -44,7 +44,8 @@ public abstract class MixinStickerBlockEntity extends SmartBlockEntity {
                     value = "INVOKE",
                     target = "Lcom/simibubi/create/foundation/blockEntity/SmartBlockEntity;tick()V",
                     shift = At.Shift.AFTER
-            )
+            ),
+            remap = false
     )
     public void stickerConstraints(CallbackInfo ci) {
         if (this.level == null || this.level.isClientSide()) return;
@@ -75,7 +76,8 @@ public abstract class MixinStickerBlockEntity extends SmartBlockEntity {
 
     @Inject(
             method = "write",
-            at = @At("TAIL")
+            at = @At("TAIL"),
+            remap = false
     )
     private void write(CompoundTag tag, boolean clientPacket, CallbackInfo ci) {
         StickerJointManager manager = getManager();
@@ -86,7 +88,8 @@ public abstract class MixinStickerBlockEntity extends SmartBlockEntity {
 
     @Inject(
             method = "read",
-            at = @At("TAIL")
+            at = @At("TAIL"),
+            remap = false
     )
     private void read(CompoundTag tag, boolean clientPacket, CallbackInfo ci) {
         StickerJointManager manager = getManager();

@@ -6,6 +6,9 @@ import net.minecraft.core.BlockPos
 import net.minecraft.resources.ResourceKey
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerLevel
+import net.minecraft.world.entity.Entity
+import net.minecraft.world.entity.EntityType
+import net.minecraft.world.entity.Marker
 import net.minecraft.world.level.Level
 import net.minecraft.world.phys.AABB
 import net.minecraftforge.server.ServerLifecycleHooks
@@ -26,7 +29,7 @@ object VSEvents {
     // Physics tick only my ass :trollface:
     @OptIn(PhysTickOnly::class, GameTickOnly::class)
     fun collide(collisionEvent: CollisionEvent, registeredListener: RegisteredListener) {
-        val shipA = collisionEvent.physLevel.getShipById(collisionEvent.shipIdA)
+        /*val shipA = collisionEvent.physLevel.getShipById(collisionEvent.shipIdA)
         val shipB = collisionEvent.physLevel.getShipById(collisionEvent.shipIdB)
 
         // TODO: handle multiple ships later
@@ -36,23 +39,6 @@ object VSEvents {
         if (mainShip == null) return
 
         val server = ServerLifecycleHooks.getCurrentServer()
-
-        val level = registeryDimToLevel(collisionEvent.dimensionId)
-
-        try {
-            if (level != null) {
-                for (point in collisionEvent.contactPoints) {
-                    val pointA = point.position.toMinecraft()
-
-                    /*Entity marker = new Marker(EntityType.MARKER, level);
-                    marker.setPos(pointA);
-                    level.addFreshEntity(marker);*/
-                }
-            }
-        } catch (cme: ConcurrentModificationException) {
-            println("Cme wuh oh")
-        }
-
 
         // HELLA sussy
         // But ruby said I could do it
@@ -91,7 +77,6 @@ object VSEvents {
                         beltAABB = beltAABB.inflate(0.1)
 
                         if (beltAABB.contains(shipCollisionPos.toMinecraft())) {
-                            println("e")
                             matchingContacts.add(
                                 Pair<Vector3dc, BeltStorageForceInducer.BeltData>(
                                     contactWorldPos,
@@ -114,9 +99,9 @@ object VSEvents {
                     val forceDir = pair.getSecond()!!.direction.step()
                     mainShip.transform.shipToWorld.transformDirection(forceDir)
 
-                    mainShip.applyInvariantForceToPos(
-                        Vector3d(forceDir).mul(mainShip.mass).mul((abs(pair.getSecond()!!.speed) * 48).toDouble()),
-                        forcePos
+                    mainShip.applyWorldForce(
+                        Vector3d(forceDir).mul(mainShip.mass).mul((abs(pair.getSecond()!!.speed * 24)).toDouble()),
+                        Vector3d(pair.getFirst())
                     )
                 }
             }
@@ -125,7 +110,7 @@ object VSEvents {
 
         // check if belt
         //if (!AllBlocks.BELT.has(level.getBlockState(worldPosition)))
-        //    return;
+        //    return;*/
     }
 
     /**
