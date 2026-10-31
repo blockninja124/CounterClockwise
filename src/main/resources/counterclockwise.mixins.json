@@ -5,6 +5,9 @@
   "compatibilityLevel": "JAVA_17",
   "refmap": "counterclockwise.refmap.json",
   "mixins": [
+    "create.basin.MixinBasinBlockEntity",
+    "create.basin.MixinBasinOperatingBlockEntity",
+    "create.basin.MixinBasinRecipe",
     "create.belt_tracks.MixinBeltBlock",
     "create.belt_tracks.MixinBeltBlockEntity",
     "create.fan.MixinEncasedFanBlock",
@@ -12,6 +15,7 @@
     "create.mechanical_arm.ArmBlockEntityMixinAccessor",
     "create.mechanical_arm.MixinArmBlockEntity",
     "create.mechanical_arm.MixinArmInteractionPoint",
+    "create.mixer.MixinMechanicalMixerBlock",
     "create.psi.MixinPortableFluidInterfaceBlockEntity",
     "create.psi.MixinPortableItemInterfaceBlockEntity",
     "create.psi.MixinPortableStorageInterfaceBlockEntity",
