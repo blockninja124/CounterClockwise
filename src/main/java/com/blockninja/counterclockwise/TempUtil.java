@@ -2,11 +2,15 @@ package com.blockninja.counterclockwise;
 
 import com.mojang.datafixers.util.Pair;
 import com.simibubi.create.content.kinetics.turntable.TurntableBlockEntity;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3d;
 import org.joml.Vector3dc;
+import org.valkyrienskies.core.api.ships.PhysShip;
 import org.valkyrienskies.core.api.ships.ServerShip;
 import org.valkyrienskies.core.api.ships.Ship;
 import org.valkyrienskies.core.api.world.PhysLevel;
@@ -15,10 +19,17 @@ import org.valkyrienskies.mod.common.ValkyrienSkiesMod;
 import org.valkyrienskies.mod.common.util.GameToPhysicsAdapter;
 import org.valkyrienskies.mod.common.util.VectorConversionsMCKt;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class TempUtil {
-    /*public static void doThing(TurntableBlockEntity self) {
+
+    public record TurntableData(Vector3dc position, double speedRads, List<Long> ships) {}
+
+    public static ConcurrentHashMap<Long, TurntableData> thingy = new ConcurrentHashMap<>();
+
+    public static void doThing(TurntableBlockEntity self) {
         ServerLevel level = (ServerLevel) self.getLevel();
         AABB aabb = self.getRenderBoundingBox().inflate(0.0, 0.5, 0.0);
 
@@ -27,128 +38,94 @@ public class TempUtil {
         if (speed == 0)
             return;
 
-        double outsideVelocity = 2.0*Math.PI*(1.0/2.0)*(speed/60.0);
+        double speedRads = rpmToRads(speed);
+        // 2.0*Math.PI*(1.0/2.0)*(speed/60.0);
         //System.out.println("Outside vel: ");
         //System.out.println(outsideVelocity);
         // /vs apply torque diaper-aunt-auto (0 20000000 0) world
-        GameToPhysicsAdapter gtpa = ValkyrienSkiesMod.getOrCreateGTPA(VSGameUtilsKt.getDimensionId(level));
 
         Vector3dc pos = VectorConversionsMCKt.toJOML(self.getBlockPos().getCenter());
 
         Iterable<Ship> ships = VSGameUtilsKt.getShipsIntersecting(level, aabb);
-        ships.forEach(ship -> {
-            if (!(ship instanceof ServerShip serverShip)) return;
-
-            //if (serverShip.getAngularVelocity().y() < 1e-4) {
-            Vector3dc newPos = ship.getWorldToShip().transformPosition(pos, new Vector3d());
-
-            double shipOutsideVelocity = 2.0*Math.PI*(newPos.distance(serverShip.getTransform().getPositionInModel()))*(radsToRPM(serverShip.getAngularVelocity().y())/60.0);
-            double desiredShipOutsideVelocity = 2.0*Math.PI*(newPos.distance(serverShip.getTransform().getPositionInModel()))*(speed/60.0);
-
-
-            Vector3dc vecToCenter = serverShip.getTransform().getShipToWorld().transformDirection(serverShip.getTransform().getPositionInModel().sub(newPos, new Vector3d()));
-
-            for (int i = 0; i < 10; i++) {
-                double factor = i/5.0;
-                Vector3d halfPos = vecToCenter.mul(factor, new Vector3d()).add(pos);
-                level.sendParticles(
-                        ParticleTypes.CRIT,
-                        halfPos.x, halfPos.y, halfPos.z,
-                        1,       // particle count
-                        0, 0, 0, // position spread
-                        0.0      // speed
-                );
-            }
-
-            // tan^-1(45)
-            double tanFactor = 88.7269699799;
-
-            // 90 degrees
-
-            //Vector3dc tanVec = vecToCenter.add(0.0, -vecToCenter.y(), 0.0, new Vector3d()).mul(tanFactor).normalize().mul(tanFactor);
-            Vector3dc tanVec = new Vector3d(
-                    vecToCenter.z(),
-                    0,
-                    -vecToCenter.x()
-            ).normalize();
-
-            gtpa.applyWorldForceToBodyPos(ship.getId(), tanVec.mul(desiredShipOutsideVelocity - shipOutsideVelocity, new Vector3d()).mul(serverShip.getInertiaData().getMass()).mul(1.0), new Vector3d());
-            gtpa. (ship.getId(), tanVec.mul(outsideVelocity - shipOutsideVelocity, new Vector3d()).mul(serverShip.getInertiaData().getMass()).mul(1.0), newPos);
-
-
-            for (int i = 0; i < 10; i++) {
-                double factor = i/5.0;
-                Vector3d halfPos = tanVec.mul(factor, new Vector3d()).add(pos);
-                level.sendParticles(
-                        ParticleTypes.FLAME,
-                        halfPos.x, halfPos.y, halfPos.z,
-                        1,       // particle count
-                        0, 0, 0, // position spread
-                        0.0      // speed
-                );
-            }
-
-            //System.out.println("Ship outside vel: ");
-            //System.out.println(shipOutsideVelocity);
-            //gtpa.appltorq(ship.getId(), new Vector3d(0, speed*1000000, 0), newPos);
-            //}
-
+        ArrayList<Long> ids = new ArrayList<>();
+        ships.forEach((ship) -> {
+            if (!(ship instanceof ServerShip)) return;
+            ids.add(ship.getId());
         });
-    }*/
 
-    public static ConcurrentHashMap<Long, Pair<Vector3d, Vector3d>> thingy = new ConcurrentHashMap<>();
+        thingy.put(self.getBlockPos().asLong(), new TurntableData(pos, speedRads, ids));
+    }
 
-    public static void doThing(TurntableBlockEntity self) {
-        if (!(self.getLevel() instanceof ServerLevel level)) return;
-
-        // TODO: This will break w/ more than one turntable
-        thingy.clear();
-
-        double rpm = self.getSpeed();
-        if (rpm == 0) return;
-        double omega = rpm * 2.0 * Math.PI / 60.0;           // rad/s about +Y
-
-        AABB aabb = self.getRenderBoundingBox().inflate(0.0, 0.5, 0.0);
-        GameToPhysicsAdapter gtpa = ValkyrienSkiesMod.getOrCreateGTPA(VSGameUtilsKt.getDimensionId(level));
-        Vector3dc axisPos = VectorConversionsMCKt.toJOML(self.getBlockPos().getCenter()); // convert to world if on a ship
-        final double GAIN = 10.0; // tune
-
-        for (Ship ship : VSGameUtilsKt.getShipsIntersecting(level, aabb)) {
-            if (!(ship instanceof ServerShip serverShip)) continue;
-
-            serverShip.getInertiaData().getMomentOfInertiaTensor()
-
-            // COM relative to turntable axis, in world space, horizontal only
-            Vector3dc com = serverShip.getTransform().getPositionInWorld();
-            Vector3d r = new Vector3d(com.x() - axisPos.x(), 0, com.z() - axisPos.z());
-
-            double mass = serverShip.getInertiaData().getMass();
-
-            // 1) COM should orbit the axis: v = ω ŷ × r
-            Vector3d vDesired = new Vector3d(omega * r.z, 0, -omega * r.x);
-            Vector3dc v = serverShip.getVelocity();
-            Vector3d dv = new Vector3d(vDesired.x - v.x(), 0, vDesired.z - v.z());
-            Vector3d force = dv.mul(mass * GAIN);
-
-            // 2) Ship should spin at ω about its own COM
-            double iyy = serverShip.getInertiaData().getMomentOfInertiaTensor().m11(); // approx, assumes ship is upright
-            double dOmega = omega - serverShip.getAngularVelocity().y();
-            Vector3d torque = new Vector3d(0, iyy * dOmega * GAIN, 0);
-
-            thingy.put(ship.getId(), new Pair<>(force, torque));
-
+    public static void debugVector(ServerLevel level, Vector3dc vec, Vector3dc position, ParticleOptions type) {
+        for (int i = 0; i < 10; i++) {
+            double factor = i/5.0;
+            Vector3d halfPos = vec.mul(factor, new Vector3d()).add(position);
+            level.sendParticles(
+                    type,
+                    halfPos.x, halfPos.y, halfPos.z,
+                    1,       // particle count
+                    0, 0, 0, // position spread
+                    0.0      // speed
+            );
         }
     }
 
-    private static double radsToRPM(double radsPerSec) {
-        return radsPerSec * 60.0 / (2.0 * Math.PI);
+    public static double rpmToRads(float rpm) {
+        return rpm * (2.0*Math.PI/60.0);
     }
 
     public static void onPhysTick(PhysLevel physLevel) {
-        thingy.forEach((id, pair) -> {
-            if (physLevel.getShipById(id) == null) return;
-            physLevel.getShipById(id).applyWorldForceToBodyPos(pair.getFirst(), new Vector3d());
-            physLevel.getShipById(id).applyWorldTorque(pair.getSecond());
+        thingy.forEach((l, data) -> {
+            data.ships.forEach((shipId) -> {
+                PhysShip ship = physLevel.getShipById(shipId);
+                if (ship == null) return;
+                processShip(ship, data.position, data.speedRads);
+            });
         });
     }
+
+
+    public static void processShip(PhysShip ship, Vector3dc pos, double speedRads) {
+        Vector3dc com = ship.getTransform().getPositionInWorld();
+        com = new Vector3d(com.x(), pos.y(), com.z());
+
+        double distance = pos.distance(com);
+
+        // TODO: Cap f1
+        // Note: f1 is already scaled by distance, so we only mult it by rads
+        Vector3dc f1 = new Vector3d(0, 1, 0).cross(com.sub(pos, new Vector3d()));//
+        f1 = f1.normalize(new Vector3d());
+        if (!f1.isFinite()) {
+            f1 = new Vector3d(0, 0, 0);
+        }
+        f1 = f1.mul(distance, new Vector3d()).mul(speedRads);
+        f1 = f1.sub(ship.getVelocity(), new Vector3d());
+        //debugVector(level, f1, com, ParticleTypes.FLAME);
+        ship.applyWorldForceToBodyPos(f1.mul(ship.getMass(), new Vector3d()), new Vector3d());
+
+
+        double thing = ship.getVelocity().dot(com.sub(pos, new Vector3d()));
+
+        if (thing != 0) {
+            Vector3dc outVel = com.sub(pos, new Vector3d()).normalize().negate().mul(thing).mul(ship.getMass());
+            System.out.println(outVel);
+            //debugVector(level, outVel, com, ParticleTypes.CRIT);
+            //ship.applyWorldForceToBodyPos(outVel.mul(1.0, new Vector3d()), new Vector3d());
+        }
+
+        // Get velocity at C
+        // Linear velocity
+        Vector3d velocity = new Vector3d(ship.getVelocity()).add(f1);
+        // Add angular velocity (with distance from com accounted for)
+        velocity.add(ship.getAngularVelocity().cross(pos.sub(com, new Vector3d()), new Vector3d()));
+        // Relative to turntable
+        // TODO: turntable ship velocity
+        Vector3dc turntableVelocity = new Vector3d(0, 0, 0);
+        velocity.sub(turntableVelocity);
+
+        //debugVector(level, velocity, pos, ParticleTypes.CRIT);
+
+        ship.applyWorldForce(velocity.negate().mul(ship.getMass()), pos);
+    }
+
 }
