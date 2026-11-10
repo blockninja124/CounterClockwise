@@ -17,6 +17,7 @@
     "create.mechanical_arm.MixinArmBlockEntity",
     "create.mechanical_arm.MixinArmInteractionPoint",
     "create.mixer.MixinMechanicalMixerBlock",
+    "create.processing.MixinBlockEntityBehaviour",
     "create.psi.MixinPortableFluidInterfaceBlockEntity",
     "create.psi.MixinPortableItemInterfaceBlockEntity",
     "create.psi.MixinPortableStorageInterfaceBlockEntity",
