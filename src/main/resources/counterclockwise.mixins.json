@@ -8,8 +8,6 @@
     "create.basin.MixinBasinBlockEntity",
     "create.basin.MixinBasinOperatingBlockEntity",
     "create.basin.MixinBasinRecipe",
-    "create.belt_tracks.MixinBeltBlock",
-    "create.belt_tracks.MixinBeltBlockEntity",
     "create.display_link.MixinClickToLinkBlockItem",
     "create.fan.MixinEncasedFanBlock",
     "create.fan.MixinEncasedFanBlockEntity",
