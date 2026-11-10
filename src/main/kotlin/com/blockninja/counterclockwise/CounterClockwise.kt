@@ -18,7 +18,6 @@ import org.valkyrienskies.core.api.events.CollisionEvent
 import org.valkyrienskies.core.api.events.ShipLoadEvent
 import org.valkyrienskies.core.api.util.GameTickOnly
 import org.valkyrienskies.core.api.util.PhysTickOnly
-import org.valkyrienskies.core.api.util.WindProvider
 import org.valkyrienskies.mod.api.events.RegisterBlockStateEvent
 import org.valkyrienskies.mod.api.toJOML
 import org.valkyrienskies.mod.api.vsApi
@@ -91,12 +90,15 @@ class CounterClockwise {
             event.ship.setAttachment<BeltStorageForceInducer>(BeltStorageForceInducer())
         })
 
+        vsApi.physTickEvent.on { event ->
+            TempUtil.onPhysTick(event.world)
+        }
+
         CounterClockwiseEntityTypes.register(MOD_BUS)
     }
 
     companion object {
         const val MOD_ID: String = "counterclockwise"
-
     }
 }
 

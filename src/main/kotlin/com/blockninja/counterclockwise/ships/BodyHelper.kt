@@ -1,5 +1,5 @@
 package com.blockninja.counterclockwise.ships
-
+/*
 import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
 import org.joml.Quaterniond
@@ -51,4 +51,4 @@ object BodyHelper {
 
         ship.removeCollisionSegment(segmentId)
     }
-}
+}*/

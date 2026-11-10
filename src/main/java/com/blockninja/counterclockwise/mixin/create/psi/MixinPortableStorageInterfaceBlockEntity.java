@@ -4,6 +4,7 @@ import com.blockninja.counterclockwise.mixinducks.create.portable_interface.IPSI
 import com.blockninja.counterclockwise.create.psi.PSIWithShip;
 import com.blockninja.counterclockwise.create.psi.PortableFluidInterfaceWithShipController;
 import com.blockninja.counterclockwise.create.psi.PortableItemInterfaceWithShipController;
+import com.google.common.cache.RemovalListener;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.simibubi.create.content.contraptions.DirectionalExtenderScrollOptionSlot;
@@ -15,7 +16,10 @@ import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour
 import com.simibubi.create.foundation.blockEntity.behaviour.ValueBoxTransform;
 import com.simibubi.create.foundation.blockEntity.behaviour.scrollValue.ScrollOptionBehaviour;
 import com.simibubi.create.foundation.utility.CreateLang;
+import kotlin.Unit;
+import kotlin.jvm.functions.Function1;
 import net.minecraft.core.Direction;
+import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;

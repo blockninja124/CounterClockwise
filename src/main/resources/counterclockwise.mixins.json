@@ -20,7 +20,8 @@
     "create.psi.MixinPortableItemInterfaceBlockEntity",
     "create.psi.MixinPortableStorageInterfaceBlockEntity",
     "create.psi.MixinPortableStorageInterfaceMovement",
-    "create.sticker.MixinStickerBlockEntity"
+    "create.sticker.MixinStickerBlockEntity",
+    "create.turntable.MixinKineticBlockEntity"
   ],
   "client": [
     "create.mechanical_arm.client.MixinArmInteractionPoint",
