@@ -5,6 +5,7 @@ import com.blockninja.counterclockwise.ships.BeltStorageForceInducer
 import com.blockninja.counterclockwise.ships.FanForceInducer
 import com.simibubi.create.AllBlocks
 import net.minecraft.core.BlockPos
+import net.minecraft.world.level.Level
 import net.minecraft.world.level.block.Block
 import net.minecraft.world.phys.shapes.BooleanOp
 import net.minecraft.world.phys.shapes.Shapes
@@ -12,17 +13,23 @@ import net.minecraft.world.phys.shapes.VoxelShape
 import net.minecraftforge.fml.common.Mod
 import org.joml.Quaterniond
 import org.joml.Vector3d
+import org.joml.primitives.AABBd
 import org.valkyrienskies.core.api.VsBeta
 import org.valkyrienskies.core.api.event.RegisteredListener
 import org.valkyrienskies.core.api.events.CollisionEvent
 import org.valkyrienskies.core.api.events.ShipLoadEvent
 import org.valkyrienskies.core.api.util.GameTickOnly
 import org.valkyrienskies.core.api.util.PhysTickOnly
+import org.valkyrienskies.core.api.util.functions.DoubleTernaryConsumer
+import org.valkyrienskies.core.util.expand
 import org.valkyrienskies.mod.api.events.RegisterBlockStateEvent
 import org.valkyrienskies.mod.api.toJOML
 import org.valkyrienskies.mod.api.vsApi
 import org.valkyrienskies.mod.common.config.MassDatapackResolver.generateShapeFromVoxel
 import org.valkyrienskies.mod.common.config.VSGameConfig
+import org.valkyrienskies.mod.common.dimensionId
+import org.valkyrienskies.mod.common.getShipManagingPos
+import org.valkyrienskies.mod.common.shipObjectWorld
 import org.valkyrienskies.mod.common.vsCore
 import thedarkcolour.kotlinforforge.forge.MOD_BUS
 import thedarkcolour.kotlinforforge.forge.vectorutil.v3d.minus
@@ -127,3 +134,32 @@ fun getHingeRotation(localDir: Vector3d, right: Vector3d = Vector3d(1.0, 0.0, 0.
 }
 
 fun Vector3d.dist(): Double {return sqrt(x * x + y * y + z * z)}
+
+fun Level?.transformToNearbyShipsAndWorldFixed(
+    x: Double, y: Double, z: Double, aabbRadius: Double, cb: DoubleTernaryConsumer
+) {
+    this?.transformToNearbyShipsAndWorldFixed(x, y, z, aabbRadius, cb::accept)
+}
+
+inline fun Level.transformToNearbyShipsAndWorldFixed(
+    x: Double, y: Double, z: Double, aabbRadius: Double, cb: (Double, Double, Double) -> Unit
+) {
+    val currentShip = getShipManagingPos(x, y, z)
+
+    val posInWorld = Vector3d(x, y, z)
+    val temp0 = Vector3d()
+
+    if (currentShip != null) {
+        currentShip.shipToWorld.transformPosition(posInWorld)
+
+        cb(posInWorld.x(), posInWorld.y(), posInWorld.z())
+    }
+
+    val aabb = AABBd(posInWorld.x, posInWorld.y, posInWorld.z, posInWorld.x, posInWorld.y, posInWorld.z).expand(aabbRadius)
+
+    for (nearbyShip in shipObjectWorld.allShips.getIntersecting(aabb, this!!.dimensionId)) {
+        if (nearbyShip == currentShip) continue
+        val posInShip = nearbyShip.worldToShip.transformPosition(posInWorld, temp0)
+        cb(posInShip.x(), posInShip.y(), posInShip.z())
+    }
+}

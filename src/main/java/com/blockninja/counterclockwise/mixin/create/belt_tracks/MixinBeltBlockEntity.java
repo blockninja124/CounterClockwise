@@ -53,7 +53,7 @@ import java.util.stream.Stream;
 import static com.blockninja.counterclockwise.CounterClockwiseKt.getHingeRotation;
 
 @Mixin(BeltBlockEntity.class)
-public abstract class MixinBeltBlockEntity extends BlockEntity implements RemoveBody {
+public abstract class MixinBeltBlockEntity extends BlockEntity {
 //
 //    @Shadow
 //    public abstract float getBeltMovementSpeed();

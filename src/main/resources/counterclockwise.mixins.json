@@ -20,6 +20,7 @@
     "create.psi.MixinPortableItemInterfaceBlockEntity",
     "create.psi.MixinPortableStorageInterfaceBlockEntity",
     "create.psi.MixinPortableStorageInterfaceMovement",
+    "create.smart_observer.MixinSmartObserverBlockEntity",
     "create.sticker.MixinStickerBlockEntity",
     "create.turntable.MixinKineticBlockEntity"
   ],
