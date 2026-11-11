@@ -1,5 +1,6 @@
 package com.blockninja.counterclockwise.mixin.create.ejector;
 
+import com.blockninja.counterclockwise.ships.EjectorForceInducer;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.simibubi.create.content.logistics.depot.EjectorBlockEntity;
 import com.simibubi.create.content.logistics.depot.EntityLauncher;
@@ -8,6 +9,7 @@ import net.createmod.catnip.math.AngleHelper;
 import net.createmod.catnip.math.VecHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -22,6 +24,8 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.valkyrienskies.core.api.ships.LoadedServerShip;
+import org.valkyrienskies.core.api.ships.LoadedShip;
 import org.valkyrienskies.core.api.ships.ServerShip;
 import org.valkyrienskies.core.api.ships.Ship;
 import org.valkyrienskies.mod.common.VSGameUtilsKt;
@@ -46,6 +50,9 @@ public abstract class MixinEjectorBlockEntity extends SyncedBlockEntity {
 
     @Shadow
     private boolean powered;
+
+    @Shadow
+    public abstract void initialize();
 
     @Inject(
             method = "ejectIfTriggered",
@@ -78,6 +85,7 @@ public abstract class MixinEjectorBlockEntity extends SyncedBlockEntity {
         AABB aabb = new AABB(worldPosition).inflate(-1 / 16f, 0, -1 / 16f);
 
         if (level == null) return;
+        if (!(level instanceof ServerLevel)) return;
         Iterable<Ship> ships = VSGameUtilsKt.getShipsIntersecting(level, aabb);
 
         Vector3dc motion = VectorConversionsMCKt.toJOML(getMotion((EntityLauncherAccessor) launcher, facing)).mul(20.0);
@@ -85,7 +93,13 @@ public abstract class MixinEjectorBlockEntity extends SyncedBlockEntity {
 
         ships.forEach((ship) -> {
             if (!(ship instanceof ServerShip ss)) return;
+            LoadedShip loadedS = VSGameUtilsKt.getShipObjectWorld(level).getLoadedShips().getById(ss.getId());
+            if (!(loadedS instanceof LoadedServerShip loadedSS)) return;
+
             Vector3d motionScaled = motion.mul(ss.getInertiaData().getMass() / (1.0 / 60.0), new Vector3d());
+            EjectorForceInducer drag = EjectorForceInducer.getOrCreate(loadedSS);
+            drag.setStepsLeft((int) Math.ceil(3 * (launcher.getTotalFlyingTicks()+20)));
+
             gtpa.applyWorldForce(ss.getId(), motionScaled, null);
         });
 

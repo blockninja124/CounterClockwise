@@ -2,6 +2,7 @@ package com.blockninja.counterclockwise
 
 import com.blockninja.counterclockwise.entity.CounterClockwiseEntityTypes
 import com.blockninja.counterclockwise.ships.BeltStorageForceInducer
+import com.blockninja.counterclockwise.ships.EjectorForceInducer
 import com.blockninja.counterclockwise.ships.FanForceInducer
 import com.simibubi.create.AllBlocks
 import net.minecraft.core.BlockPos
@@ -92,6 +93,8 @@ class CounterClockwise {
                 .useJacksonSerializer()
                 .build()
         )
+
+        vsApi.registerAttachment(EjectorForceInducer::class.java)
 
         vsApi.shipLoadEvent.on(Consumer { event: ShipLoadEvent ->
             event.ship.setAttachment<BeltStorageForceInducer>(BeltStorageForceInducer())
