@@ -9,6 +9,8 @@
     "create.basin.MixinBasinOperatingBlockEntity",
     "create.basin.MixinBasinRecipe",
     "create.display_link.MixinClickToLinkBlockItem",
+    "create.ejector.EntityLauncherAccessor",
+    "create.ejector.MixinEjectorBlockEntity",
     "create.fan.MixinEncasedFanBlock",
     "create.fan.MixinEncasedFanBlockEntity",
     "create.mechanical_arm.ArmBlockEntityMixinAccessor",
