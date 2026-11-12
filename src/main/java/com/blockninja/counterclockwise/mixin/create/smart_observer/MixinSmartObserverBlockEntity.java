@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class MixinSmartObserverBlockEntity {
     @WrapOperation(
             method = "tick",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/Level;getBlockState(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;"),
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/Level;getBlockState(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;", remap = true),
             remap = false
     )
     private static BlockState wrapRelative(Level instance, BlockPos pPos, Operation<BlockState> original, @Local(name = "targetPos") BlockPos targetPos) {
